@@ -1,0 +1,107 @@
+# Paths are relative to the repository root; override with --data-root/--output-root.
+data_root: ../fish_dataset622
+output_root: comparison_outputs_fish_dataset622_val_reuse
+image_size: 640
+test_source_split: val  # Intentionally reuse the validation directory for evaluation.
+annotations:
+  train: coco_detection_train0.json
+  val: coco_detection_val0.json
+  # This is the validation annotation, not an independent held-out test annotation.
+  test: coco_detection_val0.json
+models:
+  yolov8n:
+    type: ultralytics
+    display_name: YOLOv8n
+    model: yolov8n.pt
+    pretrained: true
+    epochs: 200
+    batch_size: 8
+  yolo11n:
+    type: ultralytics
+    display_name: YOLO11n
+    model: yolo11n.pt
+    pretrained: true
+    epochs: 200
+    batch_size: 8
+  yolo26n:
+    type: ultralytics
+    display_name: YOLO26n
+    model: yolo26n.pt
+    pretrained: true
+    epochs: 200
+    batch_size: 8
+  deimv2_pico:
+    type: deim
+    display_name: DEIMv2-Pico
+    config: configs/deimv2/ablation/M0_visual.yml
+    # Existing validation-selected checkpoint; a new --train run replaces this for its run.
+    checkpoint: outputs/20260924_231016_ablation_modules/M0_visual/best_stg1.pth
+    checkpoint_config: outputs/20260924_231016_ablation_modules/M0_visual/config_used.yml
+    pretrained: false
+    epochs: 200
+    batch_size: 2
+  ours:
+    type: deim
+    display_name: Ours
+    config: configs/deimv2/ablation/M4_full.yml
+    checkpoint: outputs/20260924_231016_ablation_modules/M4_full/best_stg1.pth
+    checkpoint_config: outputs/20260924_231016_ablation_modules/M4_full/config_used.yml
+    pretrained: false
+    epochs: 200
+    batch_size: 2
+  dfine_n:
+    type: external
+    display_name: D-FINE-N
+    family: dfine
+    repo: C:/Users/l/Desktop/D-FINE
+    repo_subdir: .
+    config: configs/dfine/dfine_hgnetv2_n_coco.yml
+    train_entry: train.py
+    checkpoint_name: best_stg1.pth
+    pretrained: true
+    pretrained_scope: HGNetv2 backbone
+    epochs: 200
+    batch_size: 2
+    use_amp: true
+  dfine_s:
+    type: external
+    display_name: D-FINE-S
+    family: dfine
+    repo: C:/Users/l/Desktop/D-FINE
+    repo_subdir: .
+    config: configs/dfine/dfine_hgnetv2_s_coco.yml
+    train_entry: train.py
+    checkpoint_name: best_stg1.pth
+    pretrained: true
+    pretrained_scope: HGNetv2 backbone
+    epochs: 200
+    batch_size: 2
+    use_amp: true
+  rtdetrv2_s:
+    type: external
+    display_name: RT-DETRv2-S
+    family: rtdetrv2
+    repo: C:/Users/l/Desktop/RT-DETR
+    repo_subdir: rtdetrv2_pytorch
+    config: configs/rtdetrv2/rtdetrv2_r18vd_120e_coco.yml
+    train_entry: tools/train.py
+    checkpoint_name: best.pth
+    pretrained: true
+    pretrained_scope: ResNet-18 backbone
+    epochs: 200
+    batch_size: 2
+    use_amp: true
+  rtdetr_r18:
+    type: external
+    display_name: RT-DETR-R18
+    family: rtdetr
+    repo: C:/Users/l/Desktop/RT-DETR
+    repo_subdir: rtdetrv2_pytorch
+    config: configs/rtdetr/rtdetr_r18vd_6x_coco.yml
+    train_entry: tools/train.py
+    checkpoint_name: best.pth
+    pretrained: true
+    pretrained_scope: ResNet-18 backbone
+    epochs: 200
+    batch_size: 2
+    use_amp: true
