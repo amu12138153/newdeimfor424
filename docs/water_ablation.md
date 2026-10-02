@@ -2,7 +2,7 @@
 
 本实现复用现有训练、Dataset、loss、matcher、COCOeval 与 checkpoint 保存流程。
 融合位置仍为 Query Self-Attention → Water Query Cross-Attention → MSDeformable Cross-Attention → FFN。
-没有改动 backbone、encoder、训练 epoch、学习率、增强、batch size、num_queries 或数据集划分。
+没有改动 backbone、encoder、训练 epoch、学习率、增强、num_queries 或数据集划分。迁移到 24 GB 单卡后，统一把本轮消融的训练 batch 设为 8，并开启 AMP；这与早期 batch=2、关闭 AMP 的历史结果不是完全相同的训练条件。
 
 ## 文件改动
 
@@ -31,15 +31,26 @@ Best checkpoint 仍由 validation mAP@0.5:0.95 选择；新脚本默认最终评
 ```powershell
 conda activate deimv2
 $testArgs = @(
-  '--test-ann', 'C:/Users/l/Desktop/fish_dataset622/val/coco_detection_val0.json',
-  '--test-images', 'C:/Users/l/Desktop/fish_dataset622/val',
-  '--test-sensor-csv', 'C:/Users/l/Desktop/fish_dataset622/val/val.csv'
+  '--test-ann', 'fish_dataset622/test/coco_detection_test0.json',
+  '--test-images', 'fish_dataset622/test',
+  '--test-sensor-csv', 'fish_dataset622/test/test.csv'
 )
 ```
 
-上述路径是本工作区实际已有的测试集。换机器时统一改路径，不要为了各个消融实验修改 CSV、数据集内容或划分。
-`run_experiment.py` 默认要求显式测试路径，也可在配置中提供完整 `test_dataloader`，以免误将验证集当成测试集。
+以上路径均相对项目根目录；从项目根目录运行即可。`configs/dataset/visdrone.yml` 也已定义相同的 `test_dataloader`，因此可省略 `@testArgs`。验证集仍只用于选最优权重，最终评估读取 `test/`。不过当前项目的 val/test 图像、传感器 CSV 与 `*0.json` 内容完全相同，尚不能作为独立留出测试集；取得真正独立数据后应先替换 `fish_dataset622/test/`。
+`run_experiment.py` 要求显式测试路径或配置中的完整 `test_dataloader`，以免误将验证集当成测试集。
 `eval_curves.py` 保留旧的默认 `--split val`；正式最终评估必须使用 `--split test`。
+
+迁移到另一台机器后，将整个项目（含 `fish_dataset622/`）放在任意目录，从项目根目录直接运行 `python run_ablation.py --group all`；无需修改配置中的盘符或用户名。已有历史输出中的 `config_used.yml` 会保存当时机器的绝对路径，不应作为新机器的训练配置。
+
+24 GB 显存的默认起始配置为训练 batch=8、验证/最终评估 batch=4、AMP 开启。因无法在另一台机器上实测显存，先用全模块配置做 1 轮烟测，再正式跑 200 轮：
+
+```powershell
+python run_experiment.py -c configs/deimv2/ablation/M4_full.yml --batch-size 8 --dir outputs/ablation_smoke_4090 --extra -u epoches=1
+python run_ablation.py --group all --batch-size 8
+```
+
+如果首次烟测发生 CUDA OOM，请换一个新的输出目录并将所有消融统一降为 `--batch-size 4`（必要时 2）；不要给不同消融组分别使用不同 batch。AMP 若出现非有限 loss，可在新实验中使用 `--extra -u use_amp=False` 关闭并保持全组一致。batch=8 会减少每轮优化器更新次数，论文中需披露并避免与旧 batch=2 结果直接作同条件比较。
 
 ## 变量组：V0–V6
 
@@ -130,7 +141,7 @@ python plot_training_log.py --log outputs/某实验/log.txt --out outputs/某实
 以下命令一次产生 Water SA、Query-Water CA 和 Top-K 均值三张图：
 
 ```powershell
-python visualize_water_attention.py -c configs/deimv2/ablation/M4_full.yml -r outputs/某实验/best_stg1.pth --image C:/path/image.jpg --water 27.8 4.1 8.05 --layer 2 --topk 10 --outdir attention_vis
+python visualize_water_attention.py -c configs/deimv2/ablation/M4_full.yml -r outputs/某实验/best_stg1.pth --image fish_dataset622/test/example.jpg --water 27.8 4.1 8.05 --layer 2 --topk 10 --outdir attention_vis
 ```
 
 省略 `--layer` 默认最后一个执行的 Decoder layer；支持 `--layer 0`、`1`、`2` 和 `all`。
@@ -154,7 +165,7 @@ M1/M3 因关闭 SA，只产生 CA 与均值图并打印说明。V0/M0 没有水�
 独立评估已有最佳权重：
 
 ```powershell
-python eval_curves.py -c configs/deimv2/ablation/M4_full.yml -r outputs/某实验/best_stg1.pth --split test --ann-file C:/Users/l/Desktop/fish_dataset622/test/coco_detection_test0.json --image-dir C:/Users/l/Desktop/fish_dataset622/test --sensor-csv C:/Users/l/Desktop/fish_dataset622/test/test.csv --outdir outputs/某实验/eval_figures --summary-dir outputs/某实验
+python eval_curves.py -c configs/deimv2/ablation/M4_full.yml -r outputs/某实验/best_stg1.pth --split test --ann-file fish_dataset622/test/coco_detection_test0.json --image-dir fish_dataset622/test --sensor-csv fish_dataset622/test/test.csv --outdir outputs/某实验/eval_figures --summary-dir outputs/某实验
 ```
 
 独立模型复杂度：

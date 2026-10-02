@@ -156,7 +156,7 @@ def main(args):
 if __name__ == '__main__':
     import argparse
     parser = argparse.ArgumentParser()
-    parser.add_argument('--onnx', default=r'C:\software\mydemo\DEIM\deim_outputs\deim_hgnetv2_visdrone2019\best_stg1.onnx',type=str, help='Path to the ONNX model file.')
-    parser.add_argument('--input', default=r'C:\software\mydemo\DEIM\datasets\visdrone\train2017\1.jpg',type=str,  help='Path to the input image or video file.')
+    parser.add_argument('--onnx', required=True, type=str, help='Path to the ONNX model file.')
+    parser.add_argument('--input', required=True, type=str, help='Path to the input image or video file.')
     args = parser.parse_args()
     main(args)

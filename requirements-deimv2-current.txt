@@ -1,4 +1,4 @@
-# Exact pip snapshot of D:\Anaconda3\envs\deimv2 on Windows, 2026-10-02.
+# Exact pip snapshot of the original Windows deimv2 environment, 2026-10-02.
 # Python 3.11.15; torch/torchvision/torchaudio use CUDA 12.4 builds.
 # Archive for provenance. It includes unrelated apps and does not capture Conda packages.
 # For another GPU/OS, use comparison/requirements-train.txt after installing PyTorch.

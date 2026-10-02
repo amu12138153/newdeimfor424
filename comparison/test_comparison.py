@@ -8,9 +8,9 @@ from pathlib import Path
 import yaml
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from common import assert_same_categories, evaluation_split, read_coco, sha256, split_paths
+from common import assert_same_categories, evaluation_split, read_coco, read_config, sha256, split_paths
 from convert_coco_to_yolo import convert
-from external_adapter import _retime_final_phase, load_official_config, prepare_config
+from external_adapter import _retime_final_phase, load_official_config, prepare_config, repo_workdir
 from external_train_bootstrap import patch_standard_coco_ranges
 from external_worker import detection
 from evaluate_coco import best_f1, evaluate
@@ -19,6 +19,21 @@ from ultralytics_adapter import to_coco_detection
 
 
 class ComparisonContracts(unittest.TestCase):
+    def test_bundled_config_uses_project_relative_sources_and_test_directory(self):
+        config = read_config()
+        self.assertEqual(config["data_root"].name, "fish_dataset622")
+        self.assertEqual(config["test_source_split"], "test")
+        self.assertEqual(split_paths(config, "test")[0].name, "test")
+        self.assertEqual(split_paths(config, "test")[1].name, "coco_detection_test0.json")
+        for name in ("yolov8n", "yolo11n", "yolo26n"):
+            self.assertEqual(config["models"][name]["batch_size"], 16)
+        for name in ("deimv2_pico", "ours", "dfine_n", "dfine_s", "rtdetrv2_s", "rtdetr_r18"):
+            self.assertEqual(config["models"][name]["batch_size"], 8)
+        for name in ("dfine_n", "dfine_s", "rtdetrv2_s", "rtdetr_r18"):
+            with self.subTest(name=name):
+                self.assertFalse(Path(config["models"][name]["repo"]).is_absolute())
+                self.assertTrue(repo_workdir(config["models"][name]).is_dir())
+
     def test_extended_detr_schedules_preserve_final_phase(self):
         for family, original_epochs, transition_epoch, expected_epoch in (
                 ("dfine", 160, 148, 188),
@@ -91,6 +106,12 @@ class ComparisonContracts(unittest.TestCase):
             self.assertFalse(merged["PResNet"]["pretrained"])
             self.assertEqual(merged["epoches"], 72)
             self.assertEqual(merged["train_dataloader"]["collate_fn"]["scales"], [640])
+            self.assertEqual(merged["train_dataloader"]["total_batch_size"], 2)
+            self.assertEqual(merged["val_dataloader"]["total_batch_size"], 2)
+            fast_snapshot = prepare_config(model, config, root, root / "output8", 72, 8)
+            fast = yaml.safe_load(fast_snapshot.read_text(encoding="utf-8"))
+            self.assertEqual(fast["train_dataloader"]["total_batch_size"], 8)
+            self.assertEqual(fast["val_dataloader"]["total_batch_size"], 4)
             self.assertEqual(merged["val_dataloader"]["dataset"]["transforms"]["ops"][0]["size"], [640, 640])
             self.assertEqual(load_official_config(source)["num_classes"], 80)
             self.assertIn("__include__", source.read_text(encoding="utf-8"))

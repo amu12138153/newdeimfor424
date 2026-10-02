@@ -2013,8 +2013,8 @@ def _label_name(label_id, names):
 def _safe_font(size=18):
     """尝试加载系统字体，找不到时使用 PIL 默认字体。"""
     candidates = [
-        r'C:\Windows\Fonts\arial.ttf',
-        r'C:\Windows\Fonts\segoeui.ttf',
+        os.path.join(os.environ.get('WINDIR', ''), 'Fonts', 'arial.ttf'),
+        os.path.join(os.environ.get('WINDIR', ''), 'Fonts', 'segoeui.ttf'),
         '/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf',
         '/usr/share/fonts/truetype/liberation2/LiberationSans-Regular.ttf',
     ]

@@ -169,9 +169,9 @@ if __name__ == '__main__':
     #推理单张图片
     import argparse
     parser = argparse.ArgumentParser()
-    parser.add_argument('-c', '--config',default=r'C:\software\mydemo\DEIM\configs\deim_add\deim_hgnetv2_s_coco.yml', type=str) #改成自己的yml
-    parser.add_argument('-r', '--resume', default=r'C:\software\mydemo\DEIM\outputs\deim_hgnetv2_s_coco\best_stg1.pth',type=str) #改成得到训练权重
-    parser.add_argument('-i', '--input', default=r'C:\software\mydemo\DEIM\datasets\visdrone\train2017\1.jpg',type=str) #改一张图片路径
+    parser.add_argument('-c', '--config', default='configs/deimv2/visdrone_pico.yml', type=str)
+    parser.add_argument('-r', '--resume', required=True, type=str, help='Trained checkpoint path')
+    parser.add_argument('-i', '--input', required=True, type=str, help='Image or video path')
     parser.add_argument('-d', '--device', type=str, default='cpu') #default = 'cuda'
     args = parser.parse_args()
     main(args)

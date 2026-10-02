@@ -151,8 +151,10 @@ optimizer: #encoder
 #   betas: [0.9, 0.999]
 #   weight_decay: 0.0001
 
+use_amp: True
+
 train_dataloader:
-  total_batch_size: 2
+  total_batch_size: 8
   num_workers: 0
   dataset:
     transforms:
@@ -184,7 +186,7 @@ train_dataloader:
     base_size_repeat: ~
 
 val_dataloader:
-  total_batch_size: 2
+  total_batch_size: 4
   dataset:
     transforms:
       ops:

@@ -236,9 +236,9 @@ def get_params():
     """获取默认参数"""
     params = {
         #换成自己的yml文件
-        'config': r'C:\software\mydemo\DEIM\configs\deim_add\deim_hgnetv2_n+Multiple_improvements.yml',
+        'config': 'configs/deimv2/visdrone_pico.yml',
        #权重换成自己的
-        'weight': r'C:\software\mydemo\DEIM\deim_outputs\deim_hgnetv2_n_visdrone_0828\checkpoint0007.pth',
+        'weight': None,
         'device': 'cuda:0',
         'method': 'GradCAM',  # 可选的CAM方法： GradCAMPlusPlus（推荐）, GradCAM, XGradCAM, EigenCAM, HiResCAM, LayerCAM, RandomCAM, EigenGradCAM
         'layer': ['encoder.fpn_blocks.0.conv1.conv'],#运行model.show_layer()选择层 通常pan层
@@ -250,9 +250,17 @@ def get_params():
     return params
 
 if __name__ == '__main__':
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--weight', required=True, help='Trained checkpoint path')
+    parser.add_argument('--image', required=True, help='Input image path')
+    parser.add_argument('--config', default='configs/deimv2/visdrone_pico.yml')
+    args = parser.parse_args()
     # 创建热力图生成器
-    model = DEIM_heatmap(**get_params())
+    params = get_params()
+    params.update(weight=args.weight, config=args.config)
+    model = DEIM_heatmap(**params)
     # 可以调用show_layer()查看层信息
     model.show_layer() #自己可以灵活的选择不同的层去生成热力图， 'layer': ['encoder.fpn_blocks.1.cv3.0.conv2', 'encoder.fpn_blocks.1.cv3.1.conv','encoder.pan_blocks.0.cv1.conv'],
     # 图像路径换成自己的
-    model(r'C:\Users\ERT ECT\Desktop\DEIMv2-main\engine\newaddmodules\StarConv.png', 'heatmap_result')
+    model(args.image, 'heatmap_result')

@@ -44,7 +44,7 @@ def main(args, ):
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('--config', '-c', default= r"C:\Users\l\Desktop\DEIMv2-main (2)\DEIMv2-main\configs\deimv2\deimv2_dinov3_l_coco.yml", type=str)
+    parser.add_argument('--config', '-c', default='configs/deimv2/deimv2_dinov3_l_coco.yml', type=str)
     args = parser.parse_args()
 
     main(args)

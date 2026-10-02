@@ -40,7 +40,7 @@ PNG实际为1536×1024位图。黄色预测区为逐层头部的概括，不能�
 - 本次只新增交付材料，不修改模型或配置，不调用 Draw.io。
 
 ### 源码索引
-路径均相对项目根 C:/Users/l/Desktop/DEIMv2-main。
+路径均相对项目根目录。
 | 文件 / 入口 | 依据 |
 |---|---|
 | configs/deimv2/visdrone_pico.yml | 本次配置，water 开关、宽度、层数、queries 等 |

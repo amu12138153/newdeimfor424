@@ -11,8 +11,8 @@ train_dataloader:
   type: DataLoader
   dataset:
     type: CocoDetection
-    img_folder: C:\Users\ERT ECT\Desktop\archive (1)\train
-    ann_file: C:\Users\ERT ECT\Desktop\archive (1)\annotations_VisDrone_train.json
+    img_folder: './archive (1)/train'
+    ann_file: './archive (1)/annotations_VisDrone_train.json'
     return_masks: False
     transforms:
       type: Compose
@@ -47,8 +47,8 @@ val_dataloader:
   type: DataLoader
   dataset:
     type: CocoDetection
-    img_folder: C:\Users\ERT ECT\Desktop\archive (1)\val
-    ann_file: C:\Users\ERT ECT\Desktop\archive (1)\annotations_VisDrone_val.json
+    img_folder: './archive (1)/val'
+    ann_file: './archive (1)/annotations_VisDrone_val.json'
     return_masks: False
     transforms:
       type: Compose

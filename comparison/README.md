@@ -1,11 +1,11 @@
 # 主流目标检测模型对比
-目前对比实验由 [comparison_models.yml (line 2)](C:/Users/l/Desktop/DEIMv2-main/comparison/configs/comparison_models.yml:2)控制
-python -m pip install pycocotools 
+对比实验由 `comparison/configs/comparison_models.yml` 控制。项目根目录须包含 `fish_dataset622/`、`D-FINE/` 和 `RT-DETR/`；配置中的数据、官方仓库和输出路径都相对项目根目录解析。请把整套目录复制到新机器，并从项目根目录运行下文命令，不必保留原电脑的用户名或磁盘位置。
 
-python comparison/run_comparison.py --model dfine_n --train --eval --profile --batch-size 1 --device cuda:0 --output-root comparison_outputs_detr_formal_retry1
-python comparison/run_comparison.py --model rtdetrv2_s --train --eval --profile --batch-size 1 --device cuda:0 --output-root comparison_outputs_detr_formal_retry1
-python comparison/run_comparison.py --model rtdetr_r18 --train --eval --profile --batch-size 1 --device cuda:0 --output-root comparison_outputs_detr_formal
-使用当前工程配置指向的 `fish_dataset622_oneversion` 数据集，不重新划分。三个 split 分别固定为 `coco_detection_train0.json`、`coco_detection_val0.json`、`coco_detection_test0.json`，图像输入为 640×640。**这三份实际标注的类别 ID 是 0=normal、1=hypoxia**；同目录不带 `0` 的 JSON 是另一套 1/2 编号，不要混用。转换和预测代码按标注中的类别名称构造映射，1/2 编号的数据也支持。
+新机器训练请使用新输出目录。旧 `outputs/` 与 `comparison_outputs*/` 中的 `config_used.yml` 和元数据是在原机器运行时生成的绝对路径快照，不应直接作为新训练配置；已训练权重若要迁移评估，需要重新生成与新机器数据路径相符的配置并核对来源。
+
+数据不重新划分：训练、验证、测试分别读取 `fish_dataset622/train/coco_detection_train0.json`、`fish_dataset622/val/coco_detection_val0.json`、`fish_dataset622/test/coco_detection_test0.json`，图像输入为 640×640。三份标注的类别 ID 是 0=normal、1=hypoxia；同目录不带 `0` 的 JSON 是另一套 1/2 编号，不要混用。
+
+注意：当前项目内的 val 和 test 虽位于不同目录，但 149 张对应图像逐张字节相同，`val.csv` 与 `test.csv` 相同，两份 `*0.json` 标注哈希也相同。因此目前不能视为独立留出测试集，程序会标记为 `validation_reused_as_test`。如另有真正独立的 test，请先替换项目内 `fish_dataset622/test/` 的图像、标注与传感器 CSV，再重新评估；不要把当前结果写作独立测试指标。
 
 推荐在支持对应模型依赖的 Python 环境下运行。现有 DEIM 环境运行 DEIM；Ultralytics 需另行安装，或使用已安装它的环境。安装前检查 PyTorch/CUDA 兼容性。所有命令在工程根目录执行。
 
@@ -14,7 +14,7 @@ python comparison/run_comparison.py --model rtdetr_r18 --train --eval --profile 
 python comparison/convert_coco_to_yolo.py --out comparison_outputs/comparison_dataset
 
 # 也可直接调用统一 YOLO 训练入口：--model 换成 yolov8n.pt 或 yolo26n.pt 即可
-python comparison/train_yolo.py --model yolo11n.pt --data comparison_outputs/comparison_dataset/fish.yaml --epochs 200 --imgsz 640 --batch 8 --name yolo11n
+python comparison/train_yolo.py --model yolo11n.pt --data comparison_outputs/comparison_dataset/fish.yaml --epochs 200 --imgsz 640 --batch 16 --name yolo11n
 
 # 分别训练/评价/统计三个 YOLO；官方 .pt 权重为 pretrained=True
 python comparison/run_comparison.py --model yolov8n --train
@@ -35,7 +35,7 @@ python comparison/run_comparison.py --model deimv2_pico --train --eval --profile
 # 独立重算测试指标（不训练，也不做 profile）
 python comparison/run_comparison.py --model yolo11n --eval
 # 指定不同的已训练权重
-python comparison/run_comparison.py --model yolo11n --eval --profile --checkpoint path/to/best.pt --pretrained true --epochs 200 --batch-size 8
+python comparison/run_comparison.py --model yolo11n --eval --profile --checkpoint path/to/best.pt --pretrained true --epochs 200 --batch-size 16
 
 # 可选：同卡 batch=1、640×640、50 次预热 + 200 次计时的 model-only CUDA FPS
 python comparison/run_comparison.py --model yolo11n --speed
@@ -61,30 +61,32 @@ FPS 为可选指标，`--speed` 通过同一脚本的 CUDA 计时逻辑只测模
 
 ## DETR 系列对比（第二阶段）
 
-已接入 D-FINE-N、D-FINE-S、RT-DETRv2-S、RT-DETR-R18。N/S 可检查 D-FINE 内部容量变化，RT-DETR-R18 和 RT-DETRv2-S 可比较同一 R18 系列的前代与 v2。官方来源分别是 [D-FINE](https://github.com/Peterande/D-FINE) 和 [RT-DETR 的 PyTorch 子工程](https://github.com/lyuwenyu/RT-DETR/tree/main/rtdetrv2_pytorch)。本机官方源码位于 `C:\Users\l\Desktop\D-FINE` 与 `C:\Users\l\Desktop\RT-DETR`，路径已写入 `comparison/configs/comparison_models.yml`。训练入口默认使用启动它的当前 `python`，不需要 `--external-python`；如仓库搬迁，可修改配置的 `repo` 或单次使用 `--repo`。
+已接入 D-FINE-N、D-FINE-S、RT-DETRv2-S、RT-DETR-R18。N/S 可检查 D-FINE 内部容量变化，RT-DETR-R18 和 RT-DETRv2-S 可比较同一 R18 系列的前代与 v2。官方来源分别是 [D-FINE](https://github.com/Peterande/D-FINE) 和 [RT-DETR 的 PyTorch 子工程](https://github.com/lyuwenyu/RT-DETR/tree/main/rtdetrv2_pytorch)。项目内源码位置为 `D-FINE/` 与 `RT-DETR/`；训练入口默认使用启动它的当前 `python`。如目录名改变，可修改配置的 `repo` 或单次使用 `--repo`。
 
-请先在当前环境补齐官方训练依赖。已检查到 PyTorch/CUDA 可用，但 RT-DETR 所需的 `pycocotools` 尚未安装；`onnx` / `onnxruntime` 也未安装，导出 ONNX 时才需处理。不要为原版 RT-DETR 的旧 `requirements.txt` 直接降级本工程的 PyTorch。建议在正式训练前，先用新输出目录各跑 1 epoch、batch=1 的烟测；本机 4 GiB 显存即使 batch=1 仍可能不足。以下命令在工程根目录、已激活的当前环境中运行：
+24 GB 单卡的起始批量：YOLOv8n/11n/26n 为 16；DEIMv2-Pico、Ours 与四个 DETR 模型为 8；DETR 训练中的验证批量最多 4。这里是保守起始值，不是实测峰值；若显存不足，在新的空输出目录中用 `--batch-size 4`（再不够用 2）重跑。增加 batch 会减少每轮优化器更新次数，不能与先前 batch=2 的实验视为相同训练条件。YOLO 也支持官方的自动显存批量选择，但为使比较可复现，这里使用固定整数。建议先在新机器各跑 1 epoch 烟测并观察 `nvidia-smi`，以下命令从项目根目录运行：
 
 ```powershell
 # 仅补齐训练时当前明确缺失的包，不安装旧版 torch/torchvision
 python -m pip install pycocotools
 
-# 三个模型分别试跑；不会修改官方仓库或已有正式结果
-python comparison/run_comparison.py --model dfine_n --train --epochs 1 --batch-size 1 --device cuda:0 --output-root comparison_outputs_detr_smoke
-python comparison/run_comparison.py --model rtdetrv2_s --train --epochs 1 --batch-size 1 --device cuda:0 --output-root comparison_outputs_detr_smoke
-python comparison/run_comparison.py --model rtdetr_r18 --train --epochs 1 --batch-size 1 --device cuda:0 --output-root comparison_outputs_detr_smoke
+# 四个 DETR 模型分别按默认 batch=8 试跑；不会修改官方仓库或已有正式结果
+python comparison/run_comparison.py --model dfine_n --train --epochs 1 --device cuda:0 --output-root comparison_outputs/detr_smoke
+python comparison/run_comparison.py --model dfine_s --train --epochs 1 --device cuda:0 --output-root comparison_outputs/detr_smoke
+python comparison/run_comparison.py --model rtdetrv2_s --train --epochs 1 --device cuda:0 --output-root comparison_outputs/detr_smoke
+python comparison/run_comparison.py --model rtdetr_r18 --train --epochs 1 --device cuda:0 --output-root comparison_outputs/detr_smoke
 
 # 烟测通过后按配置统一训练 200 轮、测试评价与模型统计；请使用未使用过的输出根目录
-python comparison/run_comparison.py --model dfine_n --train --eval --profile --batch-size 1 --device cuda:0 --output-root comparison_outputs_detr_200e
-python comparison/run_comparison.py --model rtdetrv2_s --train --eval --profile --batch-size 1 --device cuda:0 --output-root comparison_outputs_detr_200e
-python comparison/run_comparison.py --model rtdetr_r18 --train --eval --profile --batch-size 1 --device cuda:0 --output-root comparison_outputs_detr_200e
+python comparison/run_comparison.py --model dfine_n --train --eval --profile --device cuda:0 --output-root comparison_outputs/detr_200e
+python comparison/run_comparison.py --model dfine_s --train --eval --profile --device cuda:0 --output-root comparison_outputs/detr_200e
+python comparison/run_comparison.py --model rtdetrv2_s --train --eval --profile --device cuda:0 --output-root comparison_outputs/detr_200e
+python comparison/run_comparison.py --model rtdetr_r18 --train --eval --profile --device cuda:0 --output-root comparison_outputs/detr_200e
 ```
 
 脚本核对官方仓库布局和 YAML include 后，生成独立的 `config_used.yml` 快照，不修改官方仓库或数据。所有模型固定两个类别、原始标注类别 ID、640×640 训练/验证/测试输入；官方多尺度 collate 被固定为 640。训练仍调用官方训练入口；D-FINE 选其 validation-best `best_stg2.pth`（如有，否则 `best_stg1.pth`），RT-DETR 选 `best.pth`。推理调用官方 `YAMLConfig`、checkpoint 和 deploy 后处理，转换为标准 COCO 预测 JSON，再交给**未修改的** `comparison/evaluate_coco.py`。参数量、FLOPs、可选 FPS 与其他模型保持同一口径。每次运行的完整模型、路径、checkpoint 哈希、训练元数据和测试标注哈希记录在模型目录中；只在真实指标与 profile 对应同一 checkpoint 时进入总 CSV。
 
 对比配置中的 YOLO、DEIM、D-FINE 与 RT-DETR 系列均为 200 轮。延长官方训练周期时，D-FINE-N/S 的最后阶段切换点同步移至第 188 轮，RT-DETRv2-S 的数据增强策略切换点移至第 197 轮，以保留各自原定的末段长度；RT-DETR-R18 没有对应的增强阶段切换。`--epochs 1` 烟测不会重排阶段。轮数相同并不代表优化器更新次数相同，还需在论文中注明实际 batch size、预训练设置与学习率策略。
 
-默认使用官方 backbone 预训练（D-FINE 的 HGNetv2、RT-DETR 的 ResNet-18），与目前从头训练的 DEIM 不同，论文表格/正文必须注明。若希望初始化条件一致，可新建输出根目录并用 `--train --pretrained false`，但训练速度和收敛结果会变化。脚本默认 batch=2、AMP，上述命令针对 4 GiB 显存改为 batch=1；仍须先试跑。官方仓库和配置快照已完成静态校验，但真实训练/推理尚未在本机验证。已有非空模型输出目录不会被覆盖；烟测后正式训练必须使用不同的 `--output-root`。
+默认使用官方 backbone 预训练（D-FINE 的 HGNetv2、RT-DETR 的 ResNet-18），与目前从头训练的 DEIM 不同，论文表格/正文必须注明。若希望初始化条件一致，可新建输出根目录并用 `--train --pretrained false`，但训练速度和收敛结果会变化。DETR 与 DEIM 默认开启 AMP；先在新机器烟测，确认无 OOM 或非有限 loss。官方仓库和配置快照已完成静态校验，但真实训练/推理尚未在新机器验证。已有非空模型输出目录不会被覆盖；烟测后正式训练必须使用不同的 `--output-root`。
 
 快速合同测试：
 

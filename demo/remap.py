@@ -1,4 +1,5 @@
 import json
+import argparse
 
 def remap_categories(ann_path, out_path):
     with open(ann_path, 'r', encoding='utf-8') as f:
@@ -14,9 +15,9 @@ def remap_categories(ann_path, out_path):
         json.dump(d, f, ensure_ascii=False)
     print(f'{out_path}  映射关系: {mapping}')
 
-remap_categories(r'C:\Users\l\Nutstore\1\我的坚果云\coco_detection_train.json',
-                 r'C:\Users\l\Desktop\fish_dataset622\train\coco_detection_train0.json')
-remap_categories(r'C:\Users\l\Nutstore\1\我的坚果云\coco_detection_val.json',
-                 r'C:\Users\l\Desktop\fish_dataset622\val\coco_detection_val0.json')
-# remap_categories(r'C:\Users\l\Desktop\fish_dataset622\test\coco_detection_test.json',
-#                  r'C:\Users\l\Desktop\fish_dataset622\test\coco_detection_test0.json')
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument('annotation', help='Source COCO annotation JSON')
+    parser.add_argument('output', help='Destination annotation JSON')
+    args = parser.parse_args()
+    remap_categories(args.annotation, args.output)

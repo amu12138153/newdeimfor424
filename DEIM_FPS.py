@@ -145,9 +145,9 @@ def main(args):
 if __name__ == '__main__':
     import argparse
     parser = argparse.ArgumentParser()
-    parser.add_argument('-c', '--config', default=r'C:\software\mydemo\DEIM\configs\deim_add\deim_hgnetv2_s_coco.yml', type=str)
-    parser.add_argument('-r', '--resume', default=r'C:\software\mydemo\DEIM\outputs\deim_hgnetv2_s_coco\best_stg1.pth', type=str)
-    parser.add_argument('-i', '--input', default=r'C:\software\mydemo\DEIM\datasets\visdrone\train2017\1.jpg', type=str)
+    parser.add_argument('-c', '--config', default='configs/deimv2/visdrone_pico.yml', type=str)
+    parser.add_argument('-r', '--resume', required=True, type=str)
+    parser.add_argument('-i', '--input', required=True, type=str)
     parser.add_argument('-d', '--device', type=str, default='cuda')  # 'cuda' or 'cpu'
     parser.add_argument('--warmup', type=int, default=400, help='Number of warmup iterations')
     parser.add_argument('--testtime', type=int, default=3000, help='Number of timed inference iterations')

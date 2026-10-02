@@ -4,7 +4,7 @@ import json
 from pathlib import Path
 
 
-def train(model_name, data, output_root, run_name, epochs=200, imgsz=640, batch=8, device=None, pretrained=True):
+def train(model_name, data, output_root, run_name, epochs=200, imgsz=640, batch=16, device=None, pretrained=True):
     from ultralytics import YOLO
     if imgsz != 640:
         raise ValueError("Comparison experiments require imgsz=640")
@@ -35,7 +35,7 @@ if __name__ == "__main__":
     parser.add_argument("--data", required=True)
     parser.add_argument("--epochs", type=int, default=200)
     parser.add_argument("--imgsz", type=int, default=640)
-    parser.add_argument("--batch", type=int, default=8)
+    parser.add_argument("--batch", type=int, default=16)
     parser.add_argument("--name", required=True)
     parser.add_argument("--output-root", default="comparison_outputs")
     parser.add_argument("--device")

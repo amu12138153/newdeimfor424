@@ -95,8 +95,8 @@ if __name__ == '__main__':
 
     import argparse
     parser = argparse.ArgumentParser()
-    parser.add_argument('--config', '-c', default=r'C:\software\mydemo\DEIM\configs\deim_dfine\deim_hgnetv2_n_coco.yml', type=str, )
-    parser.add_argument('--resume', '-r', default=r'C:\software\mydemo\DEIM\deim_outputs\deim_hgnetv2_visdrone2019\best_stg1.pth', type=str, )
+    parser.add_argument('--config', '-c', default='configs/deimv2/visdrone_pico.yml', type=str)
+    parser.add_argument('--resume', '-r', required=True, type=str)
     parser.add_argument('--check',  action='store_true', default=True,)
     parser.add_argument('--simplify',  action='store_true', default=True,)
     args = parser.parse_args()

@@ -47,10 +47,13 @@ def main():
     parser.add_argument('--seed', type=int, default=0)
     parser.add_argument('--device', default=None)
     parser.add_argument('--nproc', type=int, default=1)
+    parser.add_argument('--batch-size', type=int, help='Override the same training batch size for every ablation')
     parser.add_argument('--extra', nargs=argparse.REMAINDER, default=[])
     args = parser.parse_args()
     if args.summary_only and not args.root:
         parser.error('--summary-only requires --root')
+    if args.batch_size is not None and args.batch_size < 1:
+        parser.error('--batch-size must be positive')
     root = Path(args.root or HERE / 'outputs' / f'{datetime.datetime.now():%Y%m%d_%H%M%S}_ablation_{args.group}').resolve()
     if args.summary_only:
         paths = sorted(root.rglob('experiment_summary.json'))
@@ -82,6 +85,8 @@ def main():
         cmd = [sys.executable, str(HERE / 'run_experiment.py'),
                '-c', str(HERE / 'configs/deimv2/ablation' / f'{name}.yml'),
                '--name', name, '--dir', str(root / name), '--seed', str(args.seed), '--nproc', str(args.nproc)]
+        if args.batch_size is not None:
+            cmd += ['--batch-size', str(args.batch_size)]
         for flag, value in [('--test-ann', args.test_ann), ('--test-images', args.test_images),
                             ('--test-sensor-csv', args.test_sensor_csv), ('--device', args.device)]:
             if value:

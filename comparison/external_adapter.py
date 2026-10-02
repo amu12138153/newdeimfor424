@@ -95,7 +95,7 @@ def prepare_config(model, config, workdir, model_dir, epochs, batch_size):
         image_dir, ann = split_paths(config, split)
         loader["dataset"]["img_folder"] = str(image_dir)
         loader["dataset"]["ann_file"] = str(ann)
-        loader["total_batch_size"] = batch_size if split == "train" else 1
+        loader["total_batch_size"] = batch_size if split == "train" else min(batch_size, 4)
         loader["num_workers"] = 0
         ops = loader["dataset"]["transforms"]["ops"]
         resizes = [op for op in ops if op.get("type") == "Resize"]

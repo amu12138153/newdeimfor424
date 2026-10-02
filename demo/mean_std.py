@@ -1,10 +1,9 @@
 import pandas as pd
+import argparse
 
-# 只放训练用的两次实验的CSV
-files = [
-    r'C:\Users\l\Desktop\home\pi\dataset\sensor_data.csv',
-    r'C:\Users\l\Desktop\2\home\pi\dataset\sensor_data.csv',
-]
+parser = argparse.ArgumentParser()
+parser.add_argument('files', nargs='+', help='Training sensor CSV files; do not include val/test')
+files = parser.parse_args().files
 df = pd.concat([pd.read_csv(f) for f in files], ignore_index=True)
 
 cols = ['temperature', 'do', 'ph', 'turbidity']  # 顺序必须和模型代码一致

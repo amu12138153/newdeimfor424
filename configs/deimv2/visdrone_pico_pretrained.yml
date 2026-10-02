@@ -1,5 +1,5 @@
 __include__: [
-  'C:\Users\ERT ECT\Desktop\DEIMv2-main\configs\dataset\visdrone.yml',
+  '../dataset/visdrone.yml',
   '../runtime.yml',
   '../base/dataloader.yml',
   '../base/optimizer.yml',

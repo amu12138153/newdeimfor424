@@ -1,6 +1,7 @@
 """Train with the existing entrypoint, plot epochs, and evaluate validation-selected best once on test."""
 import argparse
 import datetime
+import hashlib
 import json
 import os
 from pathlib import Path
@@ -15,6 +16,7 @@ def parse_args():
     p.add_argument('-c', '--config', required=True)
     p.add_argument('--name', default=None)
     p.add_argument('--nproc', type=int, default=1)
+    p.add_argument('--batch-size', type=int, help='Override training batch size for this run')
     p.add_argument('--seed', type=int, default=0)
     p.add_argument('--device', default=None)
     p.add_argument('--skip-train', action='store_true')
@@ -53,6 +55,8 @@ def main():
     name = args.name or Path(args.config).stem
     if args.skip_train and not args.dir:
         raise ValueError('--skip-train requires --dir')
+    if args.batch_size is not None and args.batch_size < 1:
+        raise ValueError('--batch-size must be positive')
     outdir = Path(args.dir or HERE / 'outputs' / f'{datetime.datetime.now():%Y%m%d_%H%M%S}_{name}').resolve()
     source = Path(args.config).resolve()
     snapshot = outdir / 'config_used.yml'
@@ -72,6 +76,8 @@ def main():
             if getattr(extra, key) is not None:
                 cfg[key] = getattr(extra, key)
         cfg.update(output_dir=str(outdir), seed=args.seed, experiment_name=name)
+        if args.batch_size is not None:
+            cfg['train_dataloader']['total_batch_size'] = args.batch_size
         if args.device:
             cfg['device'] = args.device
     if 'test_dataloader' not in cfg and not (args.test_ann and args.test_images):
@@ -84,6 +90,22 @@ def main():
     for path in (args.test_ann, args.test_images, args.test_sensor_csv):
         if path and not Path(path).exists():
             raise FileNotFoundError(path)
+    test_dataset = cfg.get('test_dataloader', {}).get('dataset', {})
+    if not args.test_ann and test_dataset:
+        for key in ('ann_file', 'img_folder', 'sensor_csv'):
+            value = test_dataset.get(key)
+            if (key != 'sensor_csv' or test_dataset.get('use_water_quality')) and not value:
+                raise ValueError(f'test_dataloader.dataset.{key} is required')
+            if value and not (HERE / value).exists():
+                raise FileNotFoundError(f'test_dataloader.dataset.{key}: {HERE / value}')
+    test_annotation = Path(args.test_ann).resolve() if args.test_ann else HERE / test_dataset.get('ann_file', '')
+    val_annotation = HERE / cfg['val_dataloader']['dataset']['ann_file']
+    if test_annotation.is_file() and val_annotation.is_file():
+        test_hash = hashlib.sha256(test_annotation.read_bytes()).digest()
+        val_hash = hashlib.sha256(val_annotation.read_bytes()).digest()
+        if test_hash == val_hash:
+            print('WARNING: test and validation annotations are byte-identical; '
+                  'these results are not from an independent test set.', flush=True)
     if not args.skip_train and outdir.exists() and any(outdir.iterdir()):
         raise FileExistsError(f'Output directory is not empty: {outdir}')
     outdir.mkdir(parents=True, exist_ok=True)
@@ -92,6 +114,7 @@ def main():
         snapshot.write_text(yaml.safe_dump(cfg, allow_unicode=True, sort_keys=False), encoding='utf-8')
     (outdir / 'run_metadata.json').write_text(json.dumps({
         'source_config': str(source), 'seed': cfg.get('seed', args.seed), 'extra': args.extra,
+        'train_batch_size': cfg.get('train_dataloader', {}).get('total_batch_size'),
         'test_annotation': args.test_ann, 'test_images': args.test_images,
         'test_sensor_csv': args.test_sensor_csv,
     }, indent=2), encoding='utf-8')

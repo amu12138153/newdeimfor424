@@ -61,10 +61,10 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     #得到训练效果
     # priority 0
-    parser.add_argument('-c', '--config', default=r'C:\software\mydemo\DEIM\configs\deim_add\deim_hgnetv2_s_coco.yml',type=str) #改这里
+    parser.add_argument('-c', '--config', default='configs/deimv2/visdrone_pico.yml', type=str)
     # parser.add_argument('-c', '--config', type=str, required=True)
     #改这里
-    parser.add_argument('-r', '--resume', default=r'C:\software\mydemo\DEIM\outputs\deim_hgnetv2_s_coco\best_stg1.pth',type=str, help='resume from checkpoint')
+    parser.add_argument('-r', '--resume', required=True, type=str, help='resume from checkpoint')
     parser.add_argument('-t', '--tuning', type=str, help='tuning from checkpoint')
     parser.add_argument('-d', '--device', type=str, help='device',)
     parser.add_argument('--seed',default=0, type=int, help='exp reproducibility')
